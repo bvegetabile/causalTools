@@ -1,9 +1,9 @@
-#-------------------------------------------------------------------------------
+################################################################################
 # 
 # Tools for performing causal analysis
 # --- Author: Brian Vegetabile (bvegetab [AT] uci [DOTEDU])
-# 
-#-------------------------------------------------------------------------------
+#
+################################################################################
 
 #-------------------------------------------------------------------------------
 # Balance Tools for assessing covariate balance
@@ -97,7 +97,6 @@ bal_table <- function(dataset,
   #                 category is less than this number it will be converted to a 
   #                 factor if not already a factor.  
   #-----------------------------------------------------------------------------
-  
   var_names <- names(dataset[,col_ind])
   treat_ind <- as.logical(treat_ind)
   outtable <- c()
@@ -134,4 +133,33 @@ bal_table <- function(dataset,
                           'NC', 'MeanC', 'VarC', 
                           'StdDiff', 'LogRatio')
   return(outtable)
+}
+
+
+wtd_ecdf <- function (var_data, wts) {
+  #-----------------------------------------------------------------------------
+  # wtd_ecdf is a modification of the ecdf() function in base R.  It modifies
+  # the function to be able to incorporate weights.  This is to visualize 
+  # balance using the empirical cumulative distribution function for continuous 
+  # covariates after weighting by the inverse of the propensity score (IPTW)
+  # 
+  # Input variables
+  # --- var_data : covariate values - vector of data
+  # --- wts      : weights for assessing cov balance by IPTW - vector of data.
+  #-----------------------------------------------------------------------------
+  ord <- order(var_data)
+  var_ordered <- var_data[ord]
+  wts_ordered <- wts[ord]
+  n <- length(var_data)
+  if (n < 1)
+    stop("'var_data' must have 1 or more non-missing values")
+  vals <- unique(var_ordered)
+  matched_vals <- match(var_ordered, vals)
+  weight_list <- aggregate(wts_ordered, by=list(matched_vals), sum)
+  rval <- approxfun(vals, cumsum(weight_list[,2])/sum(wts_ordered),
+                    method = "constant", yleft = 0, yright = 1, f = 0, ties = "ordered")
+  class(rval) <- c("ecdf", "stepfun", class(rval))
+  assign("nobs", n, envir = environment(rval))
+  attr(rval, "call") <- sys.call()
+  rval
 }
