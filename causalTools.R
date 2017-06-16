@@ -9,6 +9,7 @@
 # Balance Tools for assessing covariate balance
 # --- bal_stats calculates balance statistics (wtd or not) for single variable
 # --- bal_table calculates balance statistics for dataset
+#-------------------------------------------------------------------------------
 
 bal_stats <- function(var_data,
                      treat_ind,
@@ -17,6 +18,8 @@ bal_stats <- function(var_data,
   #-----------------------------------------------------------------------------
   # bal_stats is a function which is used to assess covariate balance for a 
   # single variable.  
+  #
+  # Input variables
   # ---  var_data  : vector of data for a single variable
   # ---  treat_ind : vector of treatment indicators.  Binary or Logical
   # ---  datatype  : type of data provided.  allows 'continuous' or 'binary'
@@ -73,4 +76,62 @@ bal_stats <- function(var_data,
   return(c(NT, round(xbar_t,4), round(s2_t,4), 
            NC, round(xbar_c,4), round(s2_c,4), 
            round(std_diff,4), round(log_var_ratio, 4)))
+}
+
+
+bal_table <- function(dataset, 
+                      col_ind, 
+                      treat_ind, 
+                      wts = rep(1, length(treat_ind)), 
+                      max_uniq=5){
+  #-----------------------------------------------------------------------------
+  # bal_table is a function which provides a table of covariate balance stats. 
+  #
+  # Input variables
+  # --- dataset   : matrix or dataframe of data
+  # --- col_ind   : indices of columns to check balance. vector of integers
+  # --- treat_ind : indicator of treatment assignment. binary or logical
+  # --- wts       : weights for use after estimating the propensity score
+  # --- max_uniq  : defines threshold for what to consider a continuous or 
+  #                 categorical variable.  If the number of unique members of a
+  #                 category is less than this number it will be converted to a 
+  #                 factor if not already a factor.  
+  #-----------------------------------------------------------------------------
+  
+  var_names <- names(dataset[,col_ind])
+  treat_ind <- as.logical(treat_ind)
+  outtable <- c()
+  counter <- 1
+  
+  # Iteration based on the order of column numbers provided
+  for(i in 1:length(col_ind)){
+    c <- col_ind[i]
+    col_data <- dataset[, c]
+    # Conversion of variables to categorical if it has less than the max_uniq
+    # categories.  
+    if(length(unique(col_data)) <= max_uniq){
+      col_data <- as.factor(col_data)
+    }
+    if(is.factor(col_data)){
+      obs_lvls <- levels(col_data)
+      outtable <- rbind(outtable, rep(NA, 8))
+      row.names(outtable)[counter] <- var_names[i]
+      counter <- counter + 1
+      for(lvl in obs_lvls){
+        stddiff <- bal_stats(col_data==lvl, treat_ind, 'binary', wts)  
+        outtable <- rbind(outtable, stddiff)
+        row.names(outtable)[counter] <- lvl
+        counter <- counter + 1
+      }
+    } else {
+      stddiff <- bal_stats(col_data, treat_ind, 'continuous', wts)  
+      outtable <- rbind(outtable, stddiff)
+      row.names(outtable)[counter] <- var_names[i]
+      counter <- counter + 1
+    }
+  }
+  colnames(outtable) <- c('NT', 'MeanT', 'VarT', 
+                          'NC', 'MeanC', 'VarC', 
+                          'StdDiff', 'LogRatio')
+  return(outtable)
 }
