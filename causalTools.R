@@ -88,7 +88,8 @@ bal_table <- function(dataset,
                       col_ind, 
                       treat_ind, 
                       wts = rep(1, length(treat_ind)), 
-                      max_uniq=5){
+                      max_uniq=5,
+                      plot_balance = FALSE){
   #-----------------------------------------------------------------------------
   # bal_table is a function which provides a table of covariate balance stats. 
   #
@@ -106,6 +107,13 @@ bal_table <- function(dataset,
   treat_ind <- as.logical(treat_ind)
   outtable <- c()
   counter <- 1
+  
+  if(plot_balance){
+    nplots <- length(col_ind)
+    nr <- ceiling(sqrt(nplots))
+    nc <- ceiling(sqrt(nplots))
+    par(mfrow=c(nr, nc))
+  }
   
   # Iteration based on the order of column numbers provided
   for(i in 1:length(col_ind)){
@@ -127,8 +135,14 @@ bal_table <- function(dataset,
         row.names(outtable)[counter] <- lvl
         counter <- counter + 1
       }
+      if(plot_balance){
+        bal_plt_cat_pdf(col_data, treat_ind, toptitle = var_names[i], vertoffset = 0.5)
+      }
     } else {
       stddiff <- bal_stats(col_data, treat_ind, 'continuous', wts)  
+      if(plot_balance){
+        bal_plt_cont_cdf(col_data, treat_ind, toptitle = var_names[i], var_name = var_names[i])
+      }
       outtable <- rbind(outtable, stddiff)
       row.names(outtable)[counter] <- var_names[i]
       counter <- counter + 1
@@ -192,7 +206,7 @@ bal_plt_cat_pdf <- function(var_data,
                             spread=0.5, 
                             vertoffset=0.05,
                             toptitle="Conditional Distribution of Covariate",
-                            legendpos='topleft', 
+                            legendpos='topright', 
                             col_0 = rgb(0,0,0.75,0.75),
                             col_1 = rgb(0,0.75,0,0.75)){
   discrete_dens <- dens_table(var_data, treat_data)
@@ -227,8 +241,9 @@ bal_plt_cat_pdf <- function(var_data,
   }
   abline(v=0:ncov)
   axis(1, xspots, cov_names)
+  axis(2, seq(0,1,0.1), las=1)
   box()
-  legend(legendpos, legend = c(paste('Category: ', t_names)), 
+  legend(legendpos, legend = c('Control', 'Treated'), 
          lwd=2, lty=1, col=col_list)
 }
 
@@ -236,7 +251,7 @@ bal_plt_cont_pdf <- function(var_data,
                              treat_data,
                              var_name = 'Covariate Name',
                              toptitle = "Conditional Distributions of Covariate",
-                             legendpos = 'topleft',
+                             legendpos = 'topright',
                              treat_names = c('Treated', 'Control'),
                              adj_bw = 1,
                              col_c = rgb(0,0,0.75,0.75),
@@ -269,7 +284,7 @@ bal_plt_cont_cdf <- function(var_data,
                              wts = rep(1, length(treat_data)),
                              var_name = 'Covariate Name',
                              toptitle = "Conditional Emp. CDF of Covariate",
-                             legendpos = 'topleft',
+                             legendpos = 'bottomright',
                              treat_names = c('Treated', 'Control'),
                              adj_bw = 1,
                              col_c = rgb(0,0,0.75,0.75),
