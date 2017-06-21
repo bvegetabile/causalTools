@@ -103,16 +103,21 @@ bal_table <- function(dataset,
   #                 category is less than this number it will be converted to a 
   #                 factor if not already a factor.  
   #-----------------------------------------------------------------------------
-  var_names <- names(dataset[,col_ind])
+  var_names <- colnames(dataset)[col_ind]
+  
   treat_ind <- as.logical(treat_ind)
   outtable <- c()
   counter <- 1
   
   if(plot_balance){
     nplots <- length(col_ind)
-    nr <- ceiling(sqrt(nplots))
-    nc <- ceiling(sqrt(nplots))
-    par(mfrow=c(nr, nc))
+    if(nplots <= 3){
+      par(mfrow=c(1, nplots))
+    } else{
+      nr <- ceiling(sqrt(nplots))
+      nc <- ceiling(sqrt(nplots))
+      par(mfrow=c(nr, nc))  
+    }
   }
   
   # Iteration based on the order of column numbers provided
@@ -141,7 +146,8 @@ bal_table <- function(dataset,
     } else {
       stddiff <- bal_stats(col_data, treat_ind, 'continuous', wts)  
       if(plot_balance){
-        bal_plt_cont_cdf(col_data, treat_ind, toptitle = var_names[i], var_name = var_names[i])
+        bal_plt_cont_cdf(col_data, treat_ind, wts = wts, 
+                         toptitle = var_names[i], var_name = var_names[i])
       }
       outtable <- rbind(outtable, stddiff)
       row.names(outtable)[counter] <- var_names[i]
