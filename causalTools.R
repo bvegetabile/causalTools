@@ -6,6 +6,10 @@
 ################################################################################
 
 #-------------------------------------------------------------------------------
+# Estimation Tools for estimating treatment effects
+# --- ht_est calculates the average treatment effect by Horvitz Thompson Estimation
+#
+#
 # Balance Tools for assessing covariate balance
 # --- bal_stats calculates balance statistics (wtd or not) for single variable
 # --- bal_table calculates balance statistics for dataset
@@ -15,6 +19,15 @@
 # --- bal_plt_cont_pdf plots the conditional distribution of treatment groups
 # --- bal_plt_cont_cdf plots the conditional emp. cdf for treatment groups
 #-------------------------------------------------------------------------------
+
+ht_est <- function(y_obs,   # vector of observed responses
+                   ta,     # binary vector of treatment assignments (0,1)
+                   est_ps){# vector of estimated propensity scores
+  left_side <- sum(ta * y_obs / est_ps) / sum(ta/est_ps) 
+  right_side <- sum((1-ta) * y_obs / (1-est_ps)) / sum((1-ta)/(1-est_ps))
+  tau <- left_side - right_side
+  return(tau)
+} 
 
 bal_stats <- function(var_data,
                      treat_ind,
