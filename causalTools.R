@@ -325,3 +325,16 @@ bal_plt_cont_cdf <- function(var_data,
         main=toptitle)
   legend(legendpos, treat_names, lty=1, lwd=3, col=c(col_t, col_c))
 }
+
+
+ks_avg_test <- function(X, TA, ps, n_pts){
+  xmin <- min(X)
+  xmax <- max(X)
+  int_pts <- seq(xmin, xmax, length.out = n_pts)
+  t_wts <- (TA / ps) / sum(TA / ps)
+  c_wts <- ((1-TA) / (1-ps)) / sum(((1-TA) / (1-ps)))
+  t_fn <- wtd_ecdf(X, wts = t_wts)
+  c_fn <- wtd_ecdf(X, wts = c_wts)
+  return(mean(t_fn(int_pts) - c_fn(int_pts)))
+}
+
