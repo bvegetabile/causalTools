@@ -327,7 +327,7 @@ bal_plt_cont_cdf <- function(var_data,
 }
 
 
-ks_avg_test <- function(X, TA, ps, n_pts){
+ks_avg_test <- function(X, TA, ps=rep(1/length(X), length(X)), n_pts=1000){
   xmin <- min(X)
   xmax <- max(X)
   int_pts <- seq(xmin, xmax, length.out = n_pts)
@@ -335,6 +335,6 @@ ks_avg_test <- function(X, TA, ps, n_pts){
   c_wts <- ((1-TA) / (1-ps)) / sum(((1-TA) / (1-ps)))
   t_fn <- wtd_ecdf(X, wts = t_wts)
   c_fn <- wtd_ecdf(X, wts = c_wts)
-  return(mean(t_fn(int_pts) - c_fn(int_pts)))
+  return(mean(abs(t_fn(int_pts) - c_fn(int_pts))))
 }
 
